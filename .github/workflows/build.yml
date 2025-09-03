@@ -1,36 +1,39 @@
-name: Build kmods
+name: Build custom kmods
 
 on:
-  workflow_dispatch:   # запуск вручную
-  push:                # или при пуше
-    branches: [ main ]
-
+  workflow_dispatch:
+    inputs:
+      kernel_version:
+        description: "Kernel version (e.g. 6.6.95-1)"
+        required: true
+        default: "6.6.95-1"
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    env:
-      KERNEL_VERSION: "6.6.95-1"
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-- name: Install dependencies 
-run: sudo apt-get update && sudo apt-get install -y build-essential libncurses5-dev gawk git unzip wget python3
 
- - name: Download ImmortalWrt SDK
+      - name: Install dependencies
         run: |
-          wget https://downloads.immortalwrt.org/snapshots/targets/mediatek/filogic/immortalwrt-sdk-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst -O sdk.tar.zst
-          mkdir sdk
-          tar -I zstd -xvf sdk.tar.zst -C sdk --strip-components=1
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev gawk git unzip wget python3 zstd
+
+      - name: Download ImmortalWrt SDK
+        run: |
+          wget https://example.com/immortalwrt-sdk-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+          tar --use-compress-program=unzstd -xf immortalwrt-sdk-*.tar.zst
+          mv immortalwrt-sdk-* sdk
 
       - name: Patch kernel version
         run: |
           cd sdk
           sed -i "s/^KERNEL_PATCHVER.*/KERNEL_PATCHVER:=${{ github.event.inputs.kernel_version }}/" include/kernel.mk
-          echo "LINUX_VERSION-${{ github.event.inputs.kernel_version }}=${{ github.event.inputs.kernel_version }}" >> include/kernel.mk
-          echo "LINUX_KERNEL_HASH-${{ github.event.inputs.kernel_version }}=skip" >> include/kernel.mk
-          # отключаем проверку kernel hash в пакетах
-          sed -i 's/+kernel (= .*)//' include/package-defaults.mk || true
+          echo "LINUX_VERSION-${{ github.event.inputs.kernel_version }} = ${{ github.event.inputs.kernel_version }}" >> include/kernel.mk
+          echo "LINUX_KERNEL_HASH-${{ github.event.inputs.kernel_version }} = skip" >> include/kernel.mk
+          sed -i 's/+kernel (= .*)//' include/package-defaults.mk
 
       - name: Update feeds
         run: |
