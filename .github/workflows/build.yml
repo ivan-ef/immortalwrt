@@ -40,6 +40,16 @@ jobs:
           echo "LINUX_VERSION-${{ github.event.inputs.kernel_version }} = ${{ github.event.inputs.kernel_version }}" >> include/kernel.mk
           echo "LINUX_KERNEL_HASH-${{ github.event.inputs.kernel_version }} = skip" >> include/kernel.mk
           sed -i 's/+kernel (= .*)//' include/package-defaults.mk
+          
+      - name: Select kmod packages
+        run: |
+          cd sdk
+          # Автоматически отмечаем нужные kmod
+          make defconfig
+          # Пример: mt7915e, mt7981-firmware, nf modules
+          scripts/feeds install -a
+          echo "CONFIG_PACKAGE_kmod-nft-queue=y" >> .config
+          
 
       - name: Update feeds
         run: |
@@ -47,11 +57,10 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Build kernel modules
+      - name: Build kmod packages
         run: |
           cd sdk
-          make defconfig
-          make package/kernel/linux/compile V=s -j$(nproc)
+          make package/kernel/linux/modules V=s -j$(nproc)
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
