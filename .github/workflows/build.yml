@@ -1,0 +1,48 @@
+name: Build kmods
+
+on:
+  workflow_dispatch:   # запуск вручную
+  push:                # или при пуше
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libncurses5-dev gawk git unzip wget python3
+
+      - name: Download OpenWrt SDK
+        run: |
+          wget https://downloads.openwrt.org/snapshots/targets/mediatek/filogic/openwrt-sdk-mediatek-filogic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          tar -xf openwrt-sdk-*.tar.xz
+          mv openwrt-sdk-* sdk
+
+      - name: Patch kernel version
+        run: |
+          cd sdk
+          sed -i 's/KERNEL_PATCHVER:=.*/KERNEL_PATCHVER:=6.6/' include/kernel.mk
+          echo "LINUX_VERSION-6.6.95 = 6.6.95" >> include/kernel.mk
+          echo "LINUX_KERNEL_HASH-6.6.95 = skip" >> include/kernel.mk
+
+      - name: Update feeds
+        run: |
+          cd sdk
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Build kmods
+        run: |
+          cd sdk
+          make defconfig
+          make package/kernel/linux/compile V=s -j$(nproc)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kmods
+          path: sdk/bin/packages/
