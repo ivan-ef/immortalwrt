@@ -5,6 +5,7 @@ on:
   push:                # или при пуше
     branches: [ main ]
 
+
 jobs:
   build:
     runs-on: ubuntu-22.04
