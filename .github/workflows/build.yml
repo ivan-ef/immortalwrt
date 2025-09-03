@@ -15,20 +15,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential libncurses5-dev gawk git unzip wget python3
+        run: sudo apt-get update && sudo apt-get install -y build-essential libncurses5-dev gawk git unzip wget python3 zstd
 
-      - name: Download OpenWrt SDK
+ - name: Download ImmortalWrt SDK
         run: |
-          wget https://downloads.openwrt.org/snapshots/targets/mediatek/filogic/openwrt-sdk-mediatek-filogic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-          tar -xf openwrt-sdk-*.tar.xz
-          mv openwrt-sdk-* sdk
+          wget https://downloads.immortalwrt.org/snapshots/targets/mediatek/filogic/immortalwrt-sdk-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst -O sdk.tar.zst
+          mkdir sdk
+          tar -I zstd -xvf sdk.tar.zst -C sdk --strip-components=1
 
       - name: Patch kernel version
         run: |
           cd sdk
-          sed -i 's/KERNEL_PATCHVER:=.*/KERNEL_PATCHVER:=6.6/' include/kernel.mk
-          echo "LINUX_VERSION-6.6.95 = 6.6.95" >> include/kernel.mk
-          echo "LINUX_KERNEL_HASH-6.6.95 = skip" >> include/kernel.mk
+          sed -i "s/^KERNEL_PATCHVER.*/KERNEL_PATCHVER:=${{ github.event.inputs.kernel_version }}/" include/kernel.mk
+          echo "LINUX_VERSION-${{ github.event.inputs.kernel_version }}=${{ github.event.inputs.kernel_version }}" >> include/kernel.mk
+          echo "LINUX_KERNEL_HASH-${{ github.event.inputs.kernel_version }}=skip" >> include/kernel.mk
+          # отключаем проверку kernel hash в пакетах
+          sed -i 's/+kernel (= .*)//' include/package-defaults.mk || true
 
       - name: Update feeds
         run: |
@@ -36,7 +38,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Build kmods
+      - name: Build kernel modules
         run: |
           cd sdk
           make defconfig
@@ -45,5 +47,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kmods
+          name: custom-kmods
           path: sdk/bin/packages/
