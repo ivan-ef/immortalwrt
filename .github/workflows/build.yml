@@ -60,7 +60,8 @@ jobs:
       - name: Build kmod packages
         run: |
           cd sdk
-          make package/kernel/linux/modules V=s -j$(nproc)
+          make package/kmod-nft-queue/compile V=s
+          make package/kmod-nft-queue/install V=s DESTDIR=$(pwd)/bin
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
