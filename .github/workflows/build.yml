@@ -23,7 +23,7 @@ jobs:
 
       - name: Download ImmortalWrt SDK
         run: |
-          wget https://example.com/immortalwrt-sdk-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+          wget https://downloads.immortalwrt.org/snapshots/targets/mediatek/filogic/immortalwrt-sdk-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst
           tar --use-compress-program=unzstd -xf immortalwrt-sdk-*.tar.zst
           mv immortalwrt-sdk-* sdk
 
