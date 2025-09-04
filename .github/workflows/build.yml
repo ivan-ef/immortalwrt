@@ -35,7 +35,7 @@ jobs:
       # 5. Подгрузка дефолтной конфигурации OpenFi 6C
       - name: Load OpenFi 6C defconfig
         run: |
-          cp defconfig/mt7981-ax3000-openfi6c1.config .config
+          cp defconfig/mt7981-ax3000-openfi6c.config .config
           make defconfig
 
 
