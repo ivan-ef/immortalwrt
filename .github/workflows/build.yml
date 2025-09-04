@@ -53,7 +53,7 @@ jobs:
         run: |
           sed -i 's/KERNEL_PATCHVER := .*/KERNEL_PATCHVER := 6.6/' feeds/openfi6c/target/linux/mediatek/Makefile
       - name: Generate default config    
-          make defconfig
+        run: make defconfig
           
       - name: Debug target feed errors
         if: failure() || always()
