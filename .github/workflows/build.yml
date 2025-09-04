@@ -42,6 +42,10 @@ jobs:
         run: |
           scripts/feeds/conf --enable qmodem
           scripts/feeds/conf --enable luci-app-openfi
+          scripts/feeds/conf --enable luci-app-qmodem
+          scripts/feeds/conf --enable luci-app-qmodem-ttl
+          scripts/feeds/conf --enable luci-app-qmodem-sms
+          scripts/feeds/conf --enable luci-app-qmodem-mwan          
           make defconfig
 
       # 7. Сборка прошивки
