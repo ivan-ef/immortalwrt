@@ -50,6 +50,11 @@ jobs:
         run: |
           scripts/feeds/conf --enable luci-app-openfi
           make defconfig
+          
+      - name: Debug target feed errors
+        if: failure() || always()
+        run: |
+          find logs/ -type f -name "*.txt" -exec echo "===== {} =====" \; -exec cat {} \;    
 
       # 7. Сборка прошивки
       - name: Build firmware
