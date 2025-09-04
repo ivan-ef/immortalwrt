@@ -58,4 +58,5 @@ jobs:
 
       # 7. Сборка прошивки
       - name: Build firmware
-        run: |
+        run: | 
+          make -j$(nproc) || make -j1 V=s
