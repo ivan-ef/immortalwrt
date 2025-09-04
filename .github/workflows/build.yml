@@ -49,6 +49,10 @@ jobs:
       - name: Enable packages in config
         run: |
           scripts/feeds/conf --enable luci-app-openfi
+      - name: Fix mediatek kernel version
+        run: |
+          sed -i 's/KERNEL_PATCHVER := .*/KERNEL_PATCHVER := 6.6/' feeds/openfi6c/target/linux/mediatek/Makefile
+      - name: Generate default config    
           make defconfig
           
       - name: Debug target feed errors
