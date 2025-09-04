@@ -1,70 +1,49 @@
-name: Build custom kmods
+name: Build OpenFi 6C with QModem & Luci-App-OpenFi
 
 on:
   workflow_dispatch:
-    inputs:
-      kernel_version:
-        description: "Kernel version (e.g. 6.6.95-1)"
-        required: true
-        default: "6.6.95-1"
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      # 1. Checkout репозитория
+      - name: Checkout
+        uses: actions/checkout@v3
 
+      # 2. Установка зависимостей сборки
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libncurses5-dev gawk git unzip wget python3 zstd
+          sudo apt update
+          sudo apt install -y build-essential flex bison gawk \
+            libncurses5-dev libssl-dev python3-distutils git unzip wget rsync
 
-      - name: Download ImmortalWrt SDK
-        run: |
-          wget https://downloads.immortalwrt.org/snapshots/targets/mediatek/filogic/immortalwrt-sdk-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst
-          tar --use-compress-program=unzstd -xf immortalwrt-sdk-*.tar.zst
-          for d in immortalwrt-sdk-*; do
-          if [ -d "$d" ]; then
-            mv "$d" sdk
-            break
-          fi
-          done
-          mv immortalwrt-sdk-* sdk
-
-      - name: Patch kernel version
-        run: |
-          cd sdk
-          sed -i "s/^KERNEL_PATCHVER.*/KERNEL_PATCHVER:=${{ github.event.inputs.kernel_version }}/" include/kernel.mk
-          echo "LINUX_VERSION-${{ github.event.inputs.kernel_version }} = ${{ github.event.inputs.kernel_version }}" >> include/kernel.mk
-          echo "LINUX_KERNEL_HASH-${{ github.event.inputs.kernel_version }} = skip" >> include/kernel.mk
-          sed -i 's/+kernel (= .*)//' include/package-defaults.mk
-          
-      - name: Select kmod packages
-        run: |
-          cd sdk
-          # Автоматически отмечаем нужные kmod
-          make defconfig
-          # Пример: mt7915e, mt7981-firmware, nf modules
-          scripts/feeds install -a
-          echo "CONFIG_PACKAGE_kmod-nft-queue=y" >> .config
-          
-
+      # 3. Обновление feeds
       - name: Update feeds
         run: |
-          cd sdk
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Build kmod packages
+      # 4. Установка конкретных пакетов
+      - name: Install QModem and Luci-App-OpenFi
         run: |
-          cd sdk
-          make package/kmod-nft-queue/compile V=s
-          make package/kmod-nft-queue/install V=s DESTDIR=$(pwd)/bin
+          ./scripts/feeds install qmodem
+          ./scripts/feeds install luci-app-openfi
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: custom-kmods
-          path: sdk/bin/packages/
+      # 5. Подгрузка дефолтной конфигурации OpenFi 6C
+      - name: Load OpenFi 6C defconfig
+        run: |
+          cp defconfig/mt7981-ax3000-openfi6c1.config .config
+          make defconfig
+
+      # 6. Автоматическое включение пакетов в .config
+      - name: Enable packages in config
+        run: |
+          scripts/feeds/conf --enable qmodem
+          scripts/feeds/conf --enable luci-app-openfi
+          make defconfig
+
+      # 7. Сборка прошивки
+      - name: Build firmware
+        run: |
