@@ -26,9 +26,10 @@ jobs:
           ./scripts/feeds install -a
 
       # 4. Установка конкретных пакетов
+       #         ./scripts/feeds install qmodem
       - name: Install QModem and Luci-App-OpenFi
         run: |
-          ./scripts/feeds install qmodem
+
           ./scripts/feeds install luci-app-openfi
 
       # 5. Подгрузка дефолтной конфигурации OpenFi 6C
@@ -37,15 +38,17 @@ jobs:
           cp defconfig/mt7981-ax3000-openfi6c1.config .config
           make defconfig
 
+
+#          scripts/feeds/conf --enable qmodem
+          
+#          scripts/feeds/conf --enable luci-app-qmodem
+#          scripts/feeds/conf --enable luci-app-qmodem-ttl
+#          scripts/feeds/conf --enable luci-app-qmodem-sms
+#          scripts/feeds/conf --enable luci-app-qmodem-mwan     
       # 6. Автоматическое включение пакетов в .config
       - name: Enable packages in config
         run: |
-          scripts/feeds/conf --enable qmodem
           scripts/feeds/conf --enable luci-app-openfi
-          scripts/feeds/conf --enable luci-app-qmodem
-          scripts/feeds/conf --enable luci-app-qmodem-ttl
-          scripts/feeds/conf --enable luci-app-qmodem-sms
-          scripts/feeds/conf --enable luci-app-qmodem-mwan          
           make defconfig
 
       # 7. Сборка прошивки
