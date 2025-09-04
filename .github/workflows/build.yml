@@ -46,10 +46,10 @@ jobs:
 #          scripts/feeds/conf --enable luci-app-qmodem-sms
 #          scripts/feeds/conf --enable luci-app-qmodem-mwan     
       # 6. Автоматическое включение пакетов в .config
-      - name: Enable packages in config
-        run: |
-          scripts/feeds/conf --enable luci-app-openfi
-          make defconfig
+#      - name: Enable packages in config
+#        run: |
+#          scripts/feeds/conf --enable luci-app-openfi
+#          make defconfig
           
       - name: Debug target feed errors
         if: failure() || always()
